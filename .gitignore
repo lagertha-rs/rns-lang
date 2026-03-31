@@ -1,0 +1,16 @@
+# Build
+/target
+
+# IDE
+.idea
+*.iml
+.vscode
+
+# Java class files
+*.class
+
+# RNS scratch files
+/*.rns
+
+# Cargo lock (library crate)
+Cargo.lock
