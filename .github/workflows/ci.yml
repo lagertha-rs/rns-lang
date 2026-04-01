@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CLIPPY_ENABLED: false  # Set to true to enable clippy
 
 jobs:
   test:
@@ -28,10 +29,10 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      # TODO: Fix and uncomment
-      #- name: Clippy
-      #  env: { RUSTFLAGS: -Dwarnings }
-      #  run: cargo clippy --all-targets -- -D warnings
+      - name: Clippy
+        if: env.CLIPPY_ENABLED == 'true'
+        env: { RUSTFLAGS: -Dwarnings }
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Build
         run: cargo build --verbose
