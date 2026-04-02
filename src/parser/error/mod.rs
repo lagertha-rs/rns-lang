@@ -6,7 +6,7 @@ pub(super) use context::{
 };
 pub(super) use rejection::{NumericRejection, ParseNumeric};
 
-use crate::diagnostic::{Diagnostic, DiagnosticLabel, DiagnosticTier, IntoDiagnostic, docs_note};
+use crate::diagnostic::{Diagnostic, DiagnosticLabel, DiagnosticTier, IntoDiagnostic, docs_note, ERR_CODE_TH_EXPECTS_NUM, ERR_CODE_EMPTY_FILE, ERR_CODE_TOKEN_OUTSIDE_CLASS};
 use crate::token::type_hint::{TypeHint, TypeHintKind, TypeHintOperandName};
 use crate::token::{RnsFlag, Spanned};
 use crate::token::{RnsToken, Span};
@@ -19,7 +19,7 @@ pub(super) enum ParserError {
     EmptyFile(Span),
     UnexpectedBodyToken(UnexpectedTokenContext, RnsToken),
     // TODO: the messages are total shit
-    UnexpectedTokenBeforeClassDefinition(RnsToken),
+    UnexpectedTokenOutsideClassDefinition(RnsToken),
     TrailingTokens(usize, Vec<RnsToken>, TrailingTokensErrContext),
     IdentifierOrHintExpected(Span, RnsToken, OperandErrPosContext),
     MissingTypeHintOperand {
@@ -54,10 +54,10 @@ impl IntoDiagnostic for ParserError {
     // TODO: put all codes as consts somewhere, and make sure they are unique across the whole codebase
     fn code(&self) -> &'static str {
         match self {
-            ParserError::TypeHintExpectsNumericOperand { .. } => "E-003",
-            ParserError::EmptyFile(_) => "E-006",
+            ParserError::TypeHintExpectsNumericOperand { .. } => ERR_CODE_TH_EXPECTS_NUM,
+            ParserError::EmptyFile(_) => ERR_CODE_EMPTY_FILE,
             ParserError::UnexpectedBodyToken(ctx, _) => ctx.error_code(),
-            ParserError::UnexpectedTokenBeforeClassDefinition(_) => "E-008",
+            ParserError::UnexpectedTokenOutsideClassDefinition(_) => ERR_CODE_TOKEN_OUTSIDE_CLASS,
             ParserError::IdentifierOrHintExpected(_, _, _) => "E-009",
             ParserError::TrailingTokens(_, _, ctx) => match ctx {
                 TrailingTokensErrContext::Class => "E-010",
@@ -89,8 +89,8 @@ impl IntoDiagnostic for ParserError {
             ParserError::UnexpectedBodyToken(ctx, token) => {
                 format!("unexpected token in {}: '{token:?}'", ctx).into()
             }
-            ParserError::UnexpectedTokenBeforeClassDefinition(unexpected) => format!(
-                "unexpected {} before class definition",
+            ParserError::UnexpectedTokenOutsideClassDefinition(unexpected) => format!(
+                "unexpected {} outside class definition",
                 unexpected.token_type()
             )
             .into(),
@@ -183,7 +183,7 @@ impl IntoDiagnostic for ParserError {
                     "unexpected token",
                 )]
             }
-            ParserError::UnexpectedTokenBeforeClassDefinition(unexpected) => {
+            ParserError::UnexpectedTokenOutsideClassDefinition(unexpected) => {
                 let valid_ctx = unexpected.can_appear_in();
                 let msg = format!(
                     "valid context{} for {} {} {}: {}.",
@@ -400,8 +400,8 @@ impl IntoDiagnostic for ParserError {
                 )
                 .into(),
             ),
-            ParserError::UnexpectedTokenBeforeClassDefinition(_) => {
-                Some("Make sure the file starts with a '.class' directive.".into())
+            ParserError::UnexpectedTokenOutsideClassDefinition(_) => {
+                Some("Ensure all code is declared inside a '.class' directive.".into())
             }
             ParserError::IdentifierOrHintExpected(_, _token, ctx) => Some(
                 format!(
@@ -563,7 +563,7 @@ impl IntoDiagnostic for ParserError {
             ParserError::MultipleCodeBlocks { duplicate, .. } => *duplicate,
             ParserError::UnexpectedBodyToken(_, token)
             | ParserError::UnknownCodeDirectiveAttribute(token)
-            | ParserError::UnexpectedTokenBeforeClassDefinition(token) => token.span(),
+            | ParserError::UnexpectedTokenOutsideClassDefinition(token) => token.span(),
             ParserError::MissingTypeHintOperand { type_hint, .. }
             | ParserError::TypeHintExpectsNumericOperand { type_hint, .. } => type_hint.span,
             ParserError::InvalidAccessFlag(_, flag) => flag.span,

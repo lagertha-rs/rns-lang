@@ -673,7 +673,7 @@ impl RnsParser {
         }
 
         let error: Diagnostic =
-            ParserError::UnexpectedTokenBeforeClassDefinition(next_token).into();
+            ParserError::UnexpectedTokenOutsideClassDefinition(next_token).into();
 
         // first token is not `.class` — try to recover by finding the next `.class`
         if !self.anchor(&[RnsTokenKind::DotClass]) {
@@ -709,6 +709,7 @@ impl RnsParser {
                 RnsToken::DotSuper(_) => self.parse_super_directive(),
                 RnsToken::DotClassEnd(_) => {
                     self.next_token(); // consume .class_end
+                    // TODO: check for trailing tokens after .class_end
                     break;
                 }
                 RnsToken::Eof(_) => break,
@@ -722,6 +723,14 @@ impl RnsParser {
                     self.anchor(&[RnsTokenKind::DotMethod, RnsTokenKind::DotSuper]);
                 }
             }
+        }
+
+        self.skip_newlines();
+        let token_after_class = self.next_token();
+        if !matches!(token_after_class, RnsToken::Eof(_)) {
+            self.diagnostic.push(
+                ParserError::UnexpectedTokenOutsideClassDefinition(token_after_class).into(),
+            );
         }
 
         Ok(())

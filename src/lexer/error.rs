@@ -1,4 +1,4 @@
-use crate::diagnostic::{DiagnosticLabel, DiagnosticTier, IntoDiagnostic, docs_note};
+use crate::diagnostic::{DiagnosticLabel, DiagnosticTier, IntoDiagnostic, docs_note, ERR_CODE_UNCLOSED_IDENT, ERR_CODE_UNKNOWN_DIR, ERR_CODE_INVALID_ESCAPE, ERR_CODE_INVALID_TYPE_HINT};
 use crate::suggestion;
 use crate::token::Span;
 use std::borrow::Cow;
@@ -16,10 +16,10 @@ pub(super) enum LexerError {
 impl IntoDiagnostic for LexerError {
     fn code(&self) -> &'static str {
         match self {
-            LexerError::UnterminatedQuotedIdentifier(_) => "E-001",
-            LexerError::UnknownDirective(_, _) => "E-002",
-            LexerError::InvalidEscape(_, _) => "E-004",
-            LexerError::UnknownTypeHint(_, _) => "E-005",
+            LexerError::UnterminatedQuotedIdentifier(_) => ERR_CODE_UNCLOSED_IDENT,
+            LexerError::UnknownDirective(_, _) => ERR_CODE_UNKNOWN_DIR,
+            LexerError::InvalidEscape(_, _) => ERR_CODE_INVALID_ESCAPE,
+            LexerError::UnknownTypeHint(_, _) => ERR_CODE_INVALID_TYPE_HINT,
         }
     }
 
