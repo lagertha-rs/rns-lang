@@ -1,3 +1,7 @@
+use crate::diagnostic::{
+    ERR_CODE_INVALID_CLASS_FLAG, ERR_CODE_INVALID_METHOD_FLAG, ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS,
+    ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD,
+};
 use crate::instruction::InstructionSpec;
 use crate::token::Spanned;
 use crate::token::type_hint::TypeHintKind;
@@ -21,8 +25,8 @@ impl Display for AccessFlagContext {
 impl AccessFlagContext {
     pub(in crate::parser) fn error_code(&self) -> &'static str {
         match self {
-            AccessFlagContext::Class => "E-015",
-            AccessFlagContext::Method => "E-016",
+            AccessFlagContext::Class => ERR_CODE_INVALID_CLASS_FLAG,
+            AccessFlagContext::Method => ERR_CODE_INVALID_METHOD_FLAG,
         }
     }
 }
@@ -45,8 +49,8 @@ impl Display for UnexpectedTokenContext {
 impl UnexpectedTokenContext {
     pub(in crate::parser) fn error_code(&self) -> &'static str {
         match self {
-            UnexpectedTokenContext::ClassBody => "E-007",
-            UnexpectedTokenContext::MethodBody => "E-017",
+            UnexpectedTokenContext::ClassBody => ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS,
+            UnexpectedTokenContext::MethodBody => ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD,
         }
     }
 }

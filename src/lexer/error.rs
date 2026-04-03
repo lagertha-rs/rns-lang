@@ -1,4 +1,7 @@
-use crate::diagnostic::{DiagnosticLabel, DiagnosticTier, IntoDiagnostic, docs_note, ERR_CODE_UNCLOSED_IDENT, ERR_CODE_UNKNOWN_DIR, ERR_CODE_INVALID_ESCAPE, ERR_CODE_INVALID_TYPE_HINT};
+use crate::diagnostic::{
+    DiagnosticLabel, DiagnosticTier, ERR_CODE_INVALID_ESCAPE, ERR_CODE_INVALID_TYPE_HINT,
+    ERR_CODE_UNCLOSED_IDENT, ERR_CODE_UNKNOWN_DIR, IntoDiagnostic, docs_note,
+};
 use crate::suggestion;
 use crate::token::Span;
 use std::borrow::Cow;

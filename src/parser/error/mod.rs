@@ -6,7 +6,14 @@ pub(super) use context::{
 };
 pub(super) use rejection::{NumericRejection, ParseNumeric};
 
-use crate::diagnostic::{Diagnostic, DiagnosticLabel, DiagnosticTier, IntoDiagnostic, docs_note, ERR_CODE_TH_EXPECTS_NUM, ERR_CODE_EMPTY_FILE, ERR_CODE_TOKEN_OUTSIDE_CLASS};
+use crate::diagnostic::{
+    Diagnostic, DiagnosticLabel, DiagnosticTier, ERR_CODE_CLASS_DEF_TRAILING_TOK,
+    ERR_CODE_DIR_ATTR, ERR_CODE_EMPTY_FILE, ERR_CODE_IDENT_OF_TH_EXPECTED,
+    ERR_CODE_METHOD_TRAILING_TOK, ERR_CODE_MISSING_TH_IMPLICIT_OP, ERR_CODE_MISSING_TH_OPERAND,
+    ERR_CODE_MULTIPLE_CODE_DIR, ERR_CODE_MULTIPLE_SUPER, ERR_CODE_SUPER_TRAILING_TOK,
+    ERR_CODE_TH_EXPECTS_NUM, ERR_CODE_TH_TRAILING_TOK, ERR_CODE_TOKEN_OUTSIDE_CLASS,
+    ERR_CODE_UNKNOWN_INSTRUCTION, IntoDiagnostic, docs_note,
+};
 use crate::token::type_hint::{TypeHint, TypeHintKind, TypeHintOperandName};
 use crate::token::{RnsFlag, Spanned};
 use crate::token::{RnsToken, Span};
@@ -58,19 +65,19 @@ impl IntoDiagnostic for ParserError {
             ParserError::EmptyFile(_) => ERR_CODE_EMPTY_FILE,
             ParserError::UnexpectedBodyToken(ctx, _) => ctx.error_code(),
             ParserError::UnexpectedTokenOutsideClassDefinition(_) => ERR_CODE_TOKEN_OUTSIDE_CLASS,
-            ParserError::IdentifierOrHintExpected(_, _, _) => "E-009",
+            ParserError::IdentifierOrHintExpected(_, _, _) => ERR_CODE_IDENT_OF_TH_EXPECTED,
             ParserError::TrailingTokens(_, _, ctx) => match ctx {
-                TrailingTokensErrContext::Class => "E-010",
-                TrailingTokensErrContext::Super => "E-012",
-                TrailingTokensErrContext::TypeHint(_) => "E-013",
-                TrailingTokensErrContext::Method => "E-018",
+                TrailingTokensErrContext::Class => ERR_CODE_CLASS_DEF_TRAILING_TOK,
+                TrailingTokensErrContext::Super => ERR_CODE_SUPER_TRAILING_TOK,
+                TrailingTokensErrContext::TypeHint(_) => ERR_CODE_TH_TRAILING_TOK,
+                TrailingTokensErrContext::Method => ERR_CODE_METHOD_TRAILING_TOK,
             },
-            ParserError::MultipleSuperDefinitions(_) => "E-011",
-            ParserError::MissingTypeHintOperand { .. } => "E-014",
-            ParserError::MissingImplicitTypeHintOperand { .. } => "E-020",
-            ParserError::MultipleCodeBlocks { .. } => "E-019",
-            ParserError::UnknownInstruction { .. } => "E-021",
-            ParserError::UnknownCodeDirectiveAttribute(_) => "E-022",
+            ParserError::MultipleSuperDefinitions(_) => ERR_CODE_MULTIPLE_SUPER,
+            ParserError::MissingTypeHintOperand { .. } => ERR_CODE_MISSING_TH_OPERAND,
+            ParserError::MissingImplicitTypeHintOperand { .. } => ERR_CODE_MISSING_TH_IMPLICIT_OP,
+            ParserError::MultipleCodeBlocks { .. } => ERR_CODE_MULTIPLE_CODE_DIR,
+            ParserError::UnknownInstruction { .. } => ERR_CODE_UNKNOWN_INSTRUCTION,
+            ParserError::UnknownCodeDirectiveAttribute(_) => ERR_CODE_DIR_ATTR,
             ParserError::InvalidAccessFlag(ctx, _) => ctx.error_code(),
         }
     }

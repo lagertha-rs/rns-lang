@@ -728,9 +728,8 @@ impl RnsParser {
         self.skip_newlines();
         let token_after_class = self.next_token();
         if !matches!(token_after_class, RnsToken::Eof(_)) {
-            self.diagnostic.push(
-                ParserError::UnexpectedTokenOutsideClassDefinition(token_after_class).into(),
-            );
+            self.diagnostic
+                .push(ParserError::UnexpectedTokenOutsideClassDefinition(token_after_class).into());
         }
 
         Ok(())
