@@ -1,6 +1,6 @@
 use crate::diagnostic::{
-    ERR_CODE_INVALID_CLASS_FLAG, ERR_CODE_INVALID_METHOD_FLAG, ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS,
-    ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD,
+    ERR_CODE_INVALID_CLASS_FLAG, ERR_CODE_INVALID_METHOD_FLAG, ERR_CODE_TOKEN_OUTSIDE_CLASS,
+    ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS, ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD,
 };
 use crate::instruction::InstructionSpec;
 use crate::token::Spanned;
@@ -33,6 +33,8 @@ impl AccessFlagContext {
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub(in crate::parser) enum UnexpectedTokenContext {
+    BeforeClassDefinition,
+    AfterClassDefinition,
     ClassBody,
     MethodBody,
 }
@@ -40,6 +42,12 @@ pub(in crate::parser) enum UnexpectedTokenContext {
 impl Display for UnexpectedTokenContext {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            UnexpectedTokenContext::BeforeClassDefinition => {
+                write!(f, "before class definition")
+            }
+            UnexpectedTokenContext::AfterClassDefinition => {
+                write!(f, "after class definition")
+            }
             UnexpectedTokenContext::ClassBody => write!(f, "class body"),
             UnexpectedTokenContext::MethodBody => write!(f, "method body"),
         }
@@ -49,6 +57,8 @@ impl Display for UnexpectedTokenContext {
 impl UnexpectedTokenContext {
     pub(in crate::parser) fn error_code(&self) -> &'static str {
         match self {
+            UnexpectedTokenContext::BeforeClassDefinition
+            | UnexpectedTokenContext::AfterClassDefinition => ERR_CODE_TOKEN_OUTSIDE_CLASS,
             UnexpectedTokenContext::ClassBody => ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS,
             UnexpectedTokenContext::MethodBody => ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD,
         }

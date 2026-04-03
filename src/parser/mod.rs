@@ -626,7 +626,7 @@ impl RnsParser {
                 // TODO: decide strategy, allow not closed?
                 RnsToken::Eof(_) => break,
                 _ => {
-                    let unexpected_error = ParserError::UnexpectedBodyToken(
+                    let unexpected_error = ParserError::UnexpectedToken(
                         UnexpectedTokenContext::MethodBody,
                         self.next_token(),
                     );
@@ -673,7 +673,8 @@ impl RnsParser {
         }
 
         let error: Diagnostic =
-            ParserError::UnexpectedTokenOutsideClassDefinition(next_token).into();
+            ParserError::UnexpectedToken(UnexpectedTokenContext::BeforeClassDefinition, next_token)
+                .into();
 
         // first token is not `.class` — try to recover by finding the next `.class`
         if !self.anchor(&[RnsTokenKind::DotClass]) {
@@ -714,7 +715,7 @@ impl RnsParser {
                 }
                 RnsToken::Eof(_) => break,
                 _ => {
-                    let unexpected_error = ParserError::UnexpectedBodyToken(
+                    let unexpected_error = ParserError::UnexpectedToken(
                         UnexpectedTokenContext::ClassBody,
                         self.next_token(),
                     );
@@ -728,8 +729,13 @@ impl RnsParser {
         self.skip_newlines();
         let token_after_class = self.next_token();
         if !matches!(token_after_class, RnsToken::Eof(_)) {
-            self.diagnostic
-                .push(ParserError::UnexpectedTokenOutsideClassDefinition(token_after_class).into());
+            self.diagnostic.push(
+                ParserError::UnexpectedToken(
+                    UnexpectedTokenContext::AfterClassDefinition,
+                    token_after_class,
+                )
+                .into(),
+            );
         }
 
         Ok(())

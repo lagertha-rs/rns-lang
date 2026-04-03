@@ -11,8 +11,8 @@ use crate::diagnostic::{
     ERR_CODE_DIR_ATTR, ERR_CODE_EMPTY_FILE, ERR_CODE_IDENT_OF_TH_EXPECTED,
     ERR_CODE_METHOD_TRAILING_TOK, ERR_CODE_MISSING_TH_IMPLICIT_OP, ERR_CODE_MISSING_TH_OPERAND,
     ERR_CODE_MULTIPLE_CODE_DIR, ERR_CODE_MULTIPLE_SUPER, ERR_CODE_SUPER_TRAILING_TOK,
-    ERR_CODE_TH_EXPECTS_NUM, ERR_CODE_TH_TRAILING_TOK, ERR_CODE_TOKEN_OUTSIDE_CLASS,
-    ERR_CODE_UNKNOWN_INSTRUCTION, IntoDiagnostic, docs_note,
+    ERR_CODE_TH_EXPECTS_NUM, ERR_CODE_TH_TRAILING_TOK, ERR_CODE_UNKNOWN_INSTRUCTION,
+    IntoDiagnostic, docs_note,
 };
 use crate::token::type_hint::{TypeHint, TypeHintKind, TypeHintOperandName};
 use crate::token::{RnsFlag, Spanned};
@@ -24,9 +24,7 @@ use std::borrow::Cow;
 #[derive(Debug, PartialEq, Clone)]
 pub(super) enum ParserError {
     EmptyFile(Span),
-    UnexpectedBodyToken(UnexpectedTokenContext, RnsToken),
-    // TODO: the messages are total shit
-    UnexpectedTokenOutsideClassDefinition(RnsToken),
+    UnexpectedToken(UnexpectedTokenContext, RnsToken),
     TrailingTokens(usize, Vec<RnsToken>, TrailingTokensErrContext),
     IdentifierOrHintExpected(Span, RnsToken, OperandErrPosContext),
     MissingTypeHintOperand {
@@ -63,8 +61,7 @@ impl IntoDiagnostic for ParserError {
         match self {
             ParserError::TypeHintExpectsNumericOperand { .. } => ERR_CODE_TH_EXPECTS_NUM,
             ParserError::EmptyFile(_) => ERR_CODE_EMPTY_FILE,
-            ParserError::UnexpectedBodyToken(ctx, _) => ctx.error_code(),
-            ParserError::UnexpectedTokenOutsideClassDefinition(_) => ERR_CODE_TOKEN_OUTSIDE_CLASS,
+            ParserError::UnexpectedToken(ctx, _) => ctx.error_code(),
             ParserError::IdentifierOrHintExpected(_, _, _) => ERR_CODE_IDENT_OF_TH_EXPECTED,
             ParserError::TrailingTokens(_, _, ctx) => match ctx {
                 TrailingTokensErrContext::Class => ERR_CODE_CLASS_DEF_TRAILING_TOK,
@@ -93,14 +90,9 @@ impl IntoDiagnostic for ParserError {
                 format!("invalid instruction '{}'", instruction.value).into()
             }
             ParserError::EmptyFile(_) => "file contains no class definition".into(),
-            ParserError::UnexpectedBodyToken(ctx, token) => {
-                format!("unexpected token in {}: '{token:?}'", ctx).into()
+            ParserError::UnexpectedToken(ctx, token) => {
+                format!("unexpected {} {}", token.token_type(), ctx).into()
             }
-            ParserError::UnexpectedTokenOutsideClassDefinition(unexpected) => format!(
-                "unexpected {} outside class definition",
-                unexpected.token_type()
-            )
-            .into(),
             ParserError::IdentifierOrHintExpected(_, token, ctx) => format!(
                 "unexpected {} where a {} is required",
                 token.token_type(),
@@ -184,28 +176,31 @@ impl IntoDiagnostic for ParserError {
             ParserError::EmptyFile(_) => {
                 vec![DiagnosticLabel::at(0..0, "expected a '.class' directive")]
             }
-            ParserError::UnexpectedBodyToken(_, token) => {
-                vec![DiagnosticLabel::at(
-                    token.span().as_range(),
-                    "unexpected token",
-                )]
-            }
-            ParserError::UnexpectedTokenOutsideClassDefinition(unexpected) => {
-                let valid_ctx = unexpected.can_appear_in();
-                let msg = format!(
-                    "valid context{} for {} {} {}: {}.",
-                    if valid_ctx.len() == 1 { "" } else { "s" },
-                    unexpected.as_identifier(),
-                    unexpected.token_type(),
-                    if valid_ctx.len() == 1 { "is" } else { "are" },
-                    valid_ctx
-                        .iter()
-                        .map(|ctx| format!("'{}'", ctx))
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                );
-                vec![DiagnosticLabel::at(unexpected.span().as_range(), msg)]
-            }
+            ParserError::UnexpectedToken(ctx, token) => match ctx {
+                UnexpectedTokenContext::BeforeClassDefinition
+                | UnexpectedTokenContext::AfterClassDefinition => {
+                    let valid_ctx = token.can_appear_in();
+                    let msg = format!(
+                        "valid context{} for {} {} {}: {}.",
+                        if valid_ctx.len() == 1 { "" } else { "s" },
+                        token.as_identifier(),
+                        token.token_type(),
+                        if valid_ctx.len() == 1 { "is" } else { "are" },
+                        valid_ctx
+                            .iter()
+                            .map(|ctx| format!("'{}'", ctx))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
+                    vec![DiagnosticLabel::at(token.span().as_range(), msg)]
+                }
+                _ => {
+                    vec![DiagnosticLabel::at(
+                        token.span().as_range(),
+                        "unexpected token",
+                    )]
+                }
+            },
             ParserError::IdentifierOrHintExpected(span, token, ctx) => {
                 let context_label = DiagnosticLabel::context(
                     span.as_range(),
@@ -400,15 +395,18 @@ impl IntoDiagnostic for ParserError {
             ParserError::EmptyFile(_) => {
                 Some("Make sure the file contains a valid class definition.".into())
             }
-            ParserError::UnexpectedBodyToken(ctx, _) => Some(
-                format!(
-                    "Check the syntax of the {} and ensure all tokens are valid.",
-                    ctx
-                )
-                .into(),
-            ),
-            ParserError::UnexpectedTokenOutsideClassDefinition(_) => {
-                Some("Ensure all code is declared inside a '.class' directive.".into())
+            ParserError::UnexpectedToken(ctx, _) => match ctx {
+                UnexpectedTokenContext::BeforeClassDefinition
+                | UnexpectedTokenContext::AfterClassDefinition => {
+                    Some("Ensure all code is declared inside a '.class' directive.".into())
+                }
+                _ => Some(
+                    format!(
+                        "Check the syntax of the {} and ensure all tokens are valid.",
+                        ctx
+                    )
+                    .into(),
+                ),
             }
             ParserError::IdentifierOrHintExpected(_, _token, ctx) => Some(
                 format!(
@@ -568,9 +566,8 @@ impl IntoDiagnostic for ParserError {
             ParserError::MultipleSuperDefinitions(defs) => defs[1].0,
             ParserError::TrailingTokens(_, tokens, _) => tokens[0].span(),
             ParserError::MultipleCodeBlocks { duplicate, .. } => *duplicate,
-            ParserError::UnexpectedBodyToken(_, token)
-            | ParserError::UnknownCodeDirectiveAttribute(token)
-            | ParserError::UnexpectedTokenOutsideClassDefinition(token) => token.span(),
+            ParserError::UnexpectedToken(_, token)
+            | ParserError::UnknownCodeDirectiveAttribute(token) => token.span(),
             ParserError::MissingTypeHintOperand { type_hint, .. }
             | ParserError::TypeHintExpectsNumericOperand { type_hint, .. } => type_hint.span,
             ParserError::InvalidAccessFlag(_, flag) => flag.span,
