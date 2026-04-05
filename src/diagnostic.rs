@@ -31,6 +31,8 @@ pub const ERR_CODE_MULTIPLE_CODE_DIR: &str = "E-019";
 pub const ERR_CODE_MISSING_TH_IMPLICIT_OP: &str = "E-020";
 pub const ERR_CODE_UNKNOWN_INSTRUCTION: &str = "E-021";
 pub const ERR_CODE_DIR_ATTR: &str = "E-022";
+pub const ERR_CODE_CLASS_END_TRAILING_TOK: &str = "E-023";
+
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiagnosticLabel {

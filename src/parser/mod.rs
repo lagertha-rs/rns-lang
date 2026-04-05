@@ -710,7 +710,7 @@ impl RnsParser {
                 RnsToken::DotSuper(_) => self.parse_super_directive(),
                 RnsToken::DotClassEnd(_) => {
                     self.next_token(); // consume .class_end
-                    // TODO: check for trailing tokens after .class_end
+                    self.verify_trailing_tokens(TrailingTokensErrContext::ClassEnd);
                     break;
                 }
                 RnsToken::Eof(_) => break,
