@@ -5,6 +5,34 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 use std::ops::Range;
 
+pub const JVMS_CODE_1: &str = "JVMS-001";
+
+pub const WARN_CODE_1: &str = "W-001";
+
+pub const ERR_CODE_UNCLOSED_IDENT: &str = "E-001";
+pub const ERR_CODE_UNKNOWN_DIR: &str = "E-002";
+pub const ERR_CODE_TH_EXPECTS_NUM: &str = "E-003";
+pub const ERR_CODE_INVALID_ESCAPE: &str = "E-004";
+pub const ERR_CODE_INVALID_TYPE_HINT: &str = "E-005";
+pub const ERR_CODE_EMPTY_FILE: &str = "E-006";
+pub const ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS: &str = "E-007";
+pub const ERR_CODE_TOKEN_OUTSIDE_CLASS: &str = "E-008";
+pub const ERR_CODE_IDENT_OF_TH_EXPECTED: &str = "E-009";
+pub const ERR_CODE_CLASS_DEF_TRAILING_TOK: &str = "E-010";
+pub const ERR_CODE_MULTIPLE_SUPER: &str = "E-011";
+pub const ERR_CODE_SUPER_TRAILING_TOK: &str = "E-012";
+pub const ERR_CODE_TH_TRAILING_TOK: &str = "E-013";
+pub const ERR_CODE_MISSING_TH_OPERAND: &str = "E-014";
+pub const ERR_CODE_INVALID_CLASS_FLAG: &str = "E-015";
+pub const ERR_CODE_INVALID_METHOD_FLAG: &str = "E-016";
+pub const ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD: &str = "E-017";
+pub const ERR_CODE_METHOD_TRAILING_TOK: &str = "E-018";
+pub const ERR_CODE_MULTIPLE_CODE_DIR: &str = "E-019";
+pub const ERR_CODE_MISSING_TH_IMPLICIT_OP: &str = "E-020";
+pub const ERR_CODE_UNKNOWN_INSTRUCTION: &str = "E-021";
+pub const ERR_CODE_DIR_ATTR: &str = "E-022";
+pub const ERR_CODE_CLASS_END_TRAILING_TOK: &str = "E-023";
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiagnosticLabel {
     pub span: Range<usize>,

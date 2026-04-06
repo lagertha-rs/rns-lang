@@ -1,3 +1,9 @@
+use crate::diagnostic::{
+    ERR_CODE_CLASS_DEF_TRAILING_TOK, ERR_CODE_CLASS_END_TRAILING_TOK, ERR_CODE_INVALID_CLASS_FLAG,
+    ERR_CODE_INVALID_METHOD_FLAG, ERR_CODE_METHOD_TRAILING_TOK, ERR_CODE_SUPER_TRAILING_TOK,
+    ERR_CODE_TH_TRAILING_TOK, ERR_CODE_TOKEN_OUTSIDE_CLASS, ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS,
+    ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD,
+};
 use crate::instruction::InstructionSpec;
 use crate::token::Spanned;
 use crate::token::type_hint::TypeHintKind;
@@ -21,14 +27,16 @@ impl Display for AccessFlagContext {
 impl AccessFlagContext {
     pub(in crate::parser) fn error_code(&self) -> &'static str {
         match self {
-            AccessFlagContext::Class => "E-015",
-            AccessFlagContext::Method => "E-016",
+            AccessFlagContext::Class => ERR_CODE_INVALID_CLASS_FLAG,
+            AccessFlagContext::Method => ERR_CODE_INVALID_METHOD_FLAG,
         }
     }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub(in crate::parser) enum UnexpectedTokenContext {
+    BeforeClassDefinition,
+    AfterClassDefinition,
     ClassBody,
     MethodBody,
 }
@@ -36,6 +44,12 @@ pub(in crate::parser) enum UnexpectedTokenContext {
 impl Display for UnexpectedTokenContext {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            UnexpectedTokenContext::BeforeClassDefinition => {
+                write!(f, "before class definition")
+            }
+            UnexpectedTokenContext::AfterClassDefinition => {
+                write!(f, "after class definition")
+            }
             UnexpectedTokenContext::ClassBody => write!(f, "class body"),
             UnexpectedTokenContext::MethodBody => write!(f, "method body"),
         }
@@ -45,8 +59,10 @@ impl Display for UnexpectedTokenContext {
 impl UnexpectedTokenContext {
     pub(in crate::parser) fn error_code(&self) -> &'static str {
         match self {
-            UnexpectedTokenContext::ClassBody => "E-007",
-            UnexpectedTokenContext::MethodBody => "E-017",
+            UnexpectedTokenContext::BeforeClassDefinition
+            | UnexpectedTokenContext::AfterClassDefinition => ERR_CODE_TOKEN_OUTSIDE_CLASS,
+            UnexpectedTokenContext::ClassBody => ERR_CODE_UNEXPECTED_TOKEN_IN_CLASS,
+            UnexpectedTokenContext::MethodBody => ERR_CODE_UNEXPECTED_TOKEN_IN_METHOD,
         }
     }
 }
@@ -68,6 +84,7 @@ pub(in crate::parser) enum TrailingTokensErrContext {
     Super,
     Method,
     TypeHint(Spanned<TypeHintKind>),
+    ClassEnd,
 }
 
 impl Display for TrailingTokensErrContext {
@@ -79,6 +96,19 @@ impl Display for TrailingTokensErrContext {
             TrailingTokensErrContext::TypeHint(kind) => {
                 write!(f, "type hint '{}'", kind.value.token_name())
             }
+            TrailingTokensErrContext::ClassEnd => write!(f, "class definition end"),
+        }
+    }
+}
+
+impl TrailingTokensErrContext {
+    pub(in crate::parser) fn error_code(&self) -> &'static str {
+        match self {
+            TrailingTokensErrContext::Class => ERR_CODE_CLASS_DEF_TRAILING_TOK,
+            TrailingTokensErrContext::Super => ERR_CODE_SUPER_TRAILING_TOK,
+            TrailingTokensErrContext::TypeHint(_) => ERR_CODE_TH_TRAILING_TOK,
+            TrailingTokensErrContext::Method => ERR_CODE_METHOD_TRAILING_TOK,
+            TrailingTokensErrContext::ClassEnd => ERR_CODE_CLASS_END_TRAILING_TOK,
         }
     }
 }

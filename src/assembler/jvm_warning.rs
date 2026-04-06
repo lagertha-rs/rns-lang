@@ -1,5 +1,7 @@
 use crate::ast::flag::RnsClassFlag;
-use crate::diagnostic::{DiagnosticLabel, DiagnosticTier, IntoDiagnostic, jvms_docs_note};
+use crate::diagnostic::{
+    DiagnosticLabel, DiagnosticTier, IntoDiagnostic, JVMS_CODE_1, jvms_docs_note,
+};
 use crate::token::{RnsFlag, Span};
 use std::borrow::Cow;
 
@@ -18,7 +20,7 @@ impl IntoDiagnostic for JvmWarning {
     fn code(&self) -> &'static str {
         match self {
             JvmWarning::InterfaceFlagWithMissingAbstract { .. }
-            | JvmWarning::InterfaceMutuallyExclusive { .. } => "JVMS-001",
+            | JvmWarning::InterfaceMutuallyExclusive { .. } => JVMS_CODE_1,
         }
     }
 
