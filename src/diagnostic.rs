@@ -33,7 +33,6 @@ pub const ERR_CODE_UNKNOWN_INSTRUCTION: &str = "E-021";
 pub const ERR_CODE_DIR_ATTR: &str = "E-022";
 pub const ERR_CODE_CLASS_END_TRAILING_TOK: &str = "E-023";
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiagnosticLabel {
     pub span: Range<usize>,
